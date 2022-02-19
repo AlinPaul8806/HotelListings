@@ -62,6 +62,15 @@ namespace HotelListing.Repository
             return await query.AsNoTracking().FirstOrDefaultAsync(expression);
         }
 
+        //GET without includes:
+        public async Task<T> GetByExpression(Expression<Func<T, bool>> expression)
+        {
+            IQueryable<T> query = _db;
+            return await query.AsNoTracking().FirstOrDefaultAsync(expression);
+        }
+
+
+
         public async Task Delete(int id)
         {
             var entity = await _db.FindAsync(id);

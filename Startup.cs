@@ -1,6 +1,8 @@
 using AutoMapper;
 using HotelListing.Configurations;
 using HotelListing.Data;
+using HotelListing.IRepository;
+using HotelListing.Repository;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -49,12 +51,16 @@ namespace HotelListing
             //add AutoMapper service
             services.AddAutoMapper(typeof(MapperInitializer));
 
+            // add the UnitOfWork service
+            services.AddTransient<IUnitOfWork, UnitOfWork>();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "HotelListing", Version = "v1" });
             });
 
-            services.AddControllers();
+            // when you see a reference loop handling, just ignore it
+            services.AddControllers().AddNewtonsoftJson(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore) ;
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -78,6 +84,12 @@ namespace HotelListing
 
             app.UseEndpoints(endpoints =>
             {
+                ////this is good for the MVC infrastructure
+                //endpoints.MapControllerRoute(
+                //    name: "default",
+                //    pattern:"{controller=Home}/{action=Index}/{id?}");
+
+
                 endpoints.MapControllers();
             });
         }

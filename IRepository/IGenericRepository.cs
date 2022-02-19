@@ -32,6 +32,8 @@ namespace HotelListing.IRepository
 
         Task<T> Get(Expression<Func<T, bool>> expression, List<string> includes);
 
+        Task<T> GetByExpression(Expression<Func<T, bool>> expression);
+
         Task Insert(T entity);
 
         Task InsertRange(IEnumerable<T> entities);

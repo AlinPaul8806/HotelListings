@@ -12,6 +12,7 @@ namespace HotelListing.Models
     {
         public int Id { get; set; }
 
-        public Country Country { get; set; }
+        public CountryDTO Country { get; set; }
+
     }
 }
