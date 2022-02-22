@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using HotelListing.Data;
 using HotelListing.IRepository;
 using HotelListing.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -39,7 +40,7 @@ namespace HotelListing.Controllers
                 var hotels = await _unitOfWork.Hotels.GetAll();
                 // map from entity to DTO:
                 var results = _mapper.Map<IList<HotelDTO>>(hotels);
-                return Ok(results); // results is of type CountryDTO
+                return Ok(results); // results is of type CountryDTOf
             }
             catch (Exception ex)
             {
@@ -48,8 +49,8 @@ namespace HotelListing.Controllers
             }
         }
 
-        [Authorize]
-        [HttpGet("{id:int}")] // this is the tempalte for the GET(id)
+        //[Authorize]
+        [HttpGet("{id:int}", Name = "GetHotel")] // this is the tempalte for the GET(id) //Name =... user for other action methods that might call this one
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetHotel(int id)
@@ -66,6 +67,35 @@ namespace HotelListing.Controllers
                 _logger.LogError(ex, $"Something went wrong in the {nameof(GetHotel)}.");
                 return StatusCode(500, "Internal Server error. Something went wrong."); // 500 is the universal error for internal server error.
             }
+        }
+
+        //[Authorize(Roles = "Administrator")]
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> CreateHotel([FromBody] CreateHotelDTO createHotelDTO)
+        {
+            if (!ModelState.IsValid)
+            {
+                _logger.LogError($"Invalid POST attempt in {nameof(CreateHotel)}");
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var hotel = _mapper.Map<Hotel>(createHotelDTO);
+                await _unitOfWork.Hotels.Insert(hotel);  // insert my object of type hotel
+                await _unitOfWork.Save(); // commit the transaction
+
+                return CreatedAtRoute("GetHotel", new { id = hotel.Id}, hotel);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Something went wrong in the {nameof(CreateHotel)}.");
+                return StatusCode(500, "Internal Server error. Something went wrong.");
+            }
+
         }
 
     }

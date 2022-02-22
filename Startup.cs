@@ -90,9 +90,10 @@ namespace HotelListing
 
             app.UseCors("AllowAll");
 
-            app.UseRouting();
+
 
             app.UseAuthentication();
+            app.UseRouting();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
