@@ -49,7 +49,7 @@ namespace HotelListing.Controllers
             }
         }
 
-        //[Authorize]
+        [Authorize]
         [HttpGet("{id:int}", Name = "GetHotel")] // this is the tempalte for the GET(id) //Name =... user for other action methods that might call this one
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
