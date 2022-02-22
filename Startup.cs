@@ -3,9 +3,11 @@ using HotelListing.Configurations;
 using HotelListing.Data;
 using HotelListing.IRepository;
 using HotelListing.Repository;
+using HotelListing.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -22,22 +24,29 @@ namespace HotelListing
 {
     public class Startup
     {
+        public IConfiguration Configuration { get; }
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
+
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             // add the dbcontext service: it will look in the appsettings.json
             services.AddDbContext<DatabaseContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("sqlConnection"))
             );
-            
+
+            services.ConfigureJWT(Configuration); // --> the one injected in the constructor
+
+            // Add authentication and call the ConfigureIdentity method from ServiceExtensions class
+            services.AddAuthentication();
+            services.ConfigureIdentity();
+
             //adding CORS to the project, o = options
             // I will allow anybody to access my API
             services.AddCors(o => {
@@ -53,6 +62,9 @@ namespace HotelListing
 
             // add the UnitOfWork service
             services.AddTransient<IUnitOfWork, UnitOfWork>();
+
+            //add the auth service:
+            services.AddScoped<IAuthManager, AuthManager>();
 
             services.AddSwaggerGen(c =>
             {
@@ -80,6 +92,7 @@ namespace HotelListing
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
