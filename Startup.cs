@@ -72,7 +72,11 @@ namespace HotelListing
             });
 
             // when you see a reference loop handling, just ignore it
-            services.AddControllers().AddNewtonsoftJson(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore) ;
+            services.AddControllers()
+                .AddNewtonsoftJson(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore);
+
+            //add versioning:
+            services.ConfigureVersioning();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -86,11 +90,10 @@ namespace HotelListing
             app.UseSwagger();
             app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "HotelListing v1"));
 
+            app.ConfigureExceptionHandler();
             app.UseHttpsRedirection();
 
             app.UseCors("AllowAll");
-
-
 
             app.UseAuthentication();
             app.UseRouting();

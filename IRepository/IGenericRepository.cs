@@ -12,11 +12,13 @@ for Order or Customer or any other entity.
 In this solution, we have been implementing the GENERIC REPOSITORY PATTERN
 */
 
+using HotelListing.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using X.PagedList;
 
 namespace HotelListing.IRepository
 {
@@ -27,6 +29,11 @@ namespace HotelListing.IRepository
         Task<IList<T>> GetAll(
             Expression<Func<T, bool>> expression = null,
             Func<IQueryable<T>, IOrderedQueryable<T>> orderBy = null,
+            List<string> includes = null
+            );
+
+        Task<IPagedList<T>> GetPagedList(
+            RequestParams requestParams,
             List<string> includes = null
             );
 

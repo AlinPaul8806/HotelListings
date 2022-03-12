@@ -2,11 +2,17 @@
 //you don't have to build mountains of code in the Startup.cs
 
 using HotelListing.Data;
+using HotelListing.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,6 +61,38 @@ namespace HotelListing
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
                     };
                 });
+        }
+
+        // we will override the exception handler from .NET CORE
+        public static void ConfigureExceptionHandler(this IApplicationBuilder app)
+        {
+            app.UseExceptionHandler(error => {
+                error.Run(async context => {
+                    context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                    context.Response.ContentType = "application.json";
+                    var contextFeature = context.Features.Get<IExceptionHandlerFeature>();
+                    if (contextFeature !=  null)
+                    {
+                        Log.Error($"Something went wrong in the {contextFeature.Error}");
+
+                        await context.Response.WriteAsync(new Error
+                        { 
+                            StatusCode = context.Response.StatusCode,
+                            Message = "Internal Server Error. Please try again later."
+                        }.ToString());
+                    }
+                });
+            });
+        }
+
+        public static void ConfigureVersioning(this IServiceCollection services)
+        {
+            services.AddApiVersioning( options => 
+            {
+                options.ReportApiVersions = true; //there will be a header in the response with the API version
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+            });
         }
     }
 }
