@@ -1,6 +1,7 @@
 ﻿//this class has the role to easily find other services.
 //you don't have to build mountains of code in the Startup.cs
 
+using AspNetCoreRateLimit;
 using HotelListing.Data;
 using HotelListing.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -46,11 +47,12 @@ namespace HotelListing
                 // in the token validation params, you set different token validation attributes
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                
+
 
             })
                 .AddJwtBearer(
-                options => {
+                options =>
+                {
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuer = false,
@@ -66,17 +68,19 @@ namespace HotelListing
         // we will override the exception handler from .NET CORE
         public static void ConfigureExceptionHandler(this IApplicationBuilder app)
         {
-            app.UseExceptionHandler(error => {
-                error.Run(async context => {
+            app.UseExceptionHandler(error =>
+            {
+                error.Run(async context =>
+                {
                     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                     context.Response.ContentType = "application.json";
                     var contextFeature = context.Features.Get<IExceptionHandlerFeature>();
-                    if (contextFeature !=  null)
+                    if (contextFeature != null)
                     {
                         Log.Error($"Something went wrong in the {contextFeature.Error}");
 
                         await context.Response.WriteAsync(new Error
-                        { 
+                        {
                             StatusCode = context.Response.StatusCode,
                             Message = "Internal Server Error. Please try again later."
                         }.ToString());
@@ -87,12 +91,33 @@ namespace HotelListing
 
         public static void ConfigureVersioning(this IServiceCollection services)
         {
-            services.AddApiVersioning( options => 
-            {
-                options.ReportApiVersions = true; //there will be a header in the response with the API version
+            services.AddApiVersioning(options =>
+           {
+               options.ReportApiVersions = true; //there will be a header in the response with the API version
                 options.AssumeDefaultVersionWhenUnspecified = true;
-                options.DefaultApiVersion = new ApiVersion(1, 0);
+               options.DefaultApiVersion = new ApiVersion(1, 0);
+           });
+        }
+
+        public static void ConfigureRateLimiting(this IServiceCollection services)
+        {
+            // you can have multiple rules, but fro now, we will implement one
+            var rateLimitRules = new List<RateLimitRule>
+            {
+                new RateLimitRule
+                {
+                    Endpoint = "*",
+                    Limit = 1,
+                    Period = "5 s"
+                }
+            };
+            services.Configure<IpRateLimitOptions>(options =>
+            {
+                options.GeneralRules = rateLimitRules;
             });
+            services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+            services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+            services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
         }
     }
 }

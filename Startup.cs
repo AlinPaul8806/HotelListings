@@ -1,3 +1,4 @@
+using AspNetCoreRateLimit;
 using AutoMapper;
 using HotelListing.Configurations;
 using HotelListing.Data;
@@ -41,11 +42,15 @@ namespace HotelListing
                 options.UseSqlServer(Configuration.GetConnectionString("sqlConnection"))
             );
 
-            services.ConfigureJWT(Configuration); // --> the one injected in the constructor
+            //add Limiting and Throttling:
+            services.AddMemoryCache();
+            services.ConfigureRateLimiting();
+            services.AddHttpContextAccessor();
 
             // Add authentication and call the ConfigureIdentity method from ServiceExtensions class
             services.AddAuthentication();
             services.ConfigureIdentity();
+            services.ConfigureJWT(Configuration); // --> the one injected in the constructor
 
             //adding CORS to the project, o = options
             // I will allow anybody to access my API
@@ -92,6 +97,8 @@ namespace HotelListing
 
             app.ConfigureExceptionHandler();
             app.UseHttpsRedirection();
+
+            app.UseIpRateLimiting();
 
             app.UseCors("AllowAll");
 
